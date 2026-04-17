@@ -28,9 +28,9 @@ export class ArticleService {
     const foundedArticle=await this.articleModel.findByPk(id)
 
   if(!foundedArticle) throw new NotFoundException("not found")
-    await this.articleModel.update(updateArticleDto,{where:{id},return:true})
+    await this.articleModel.update(updateArticleDto,{where:{id},returning:true})
 
-    return {massage:"updated"}
+    return {message:"updated"}
   }
 
  async remove(id: number):Promise <{message:string}> {
