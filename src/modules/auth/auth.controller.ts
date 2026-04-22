@@ -1,22 +1,39 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { VeriflyDto } from './dto/verify.dto';
+import { ApiBadRequestResponse, ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { LoginDto } from './dto/login.dto';
 
-
+@ApiInternalServerErrorResponse({description:"Internal server error"})
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+ 
 
+  @ApiOperation({description:"ro'yxatdan o'tish uchun"})
+  @ApiResponse({description:"User already exists"})
+  @ApiResponse({description:"registred"})
+  @HttpCode(201)
   @Post("register")
   register(@Body() createAuthDto: CreateAuthDto) {
     return this.authService.register(createAuthDto);
   }
- 
+ @ApiBadRequestResponse({description:"invaled otp"})
+ @ApiBadRequestResponse({description:"wrong otp"})
+ @ApiBadRequestResponse({description:"expired"})
+ @ApiUnauthorizedResponse({description:"email not found"})
+ @HttpCode(200)
   @Post("verify")
   verify(@Body() dto:VeriflyDto){
     return this.authService.verify(dto);
   }
- 
-
+  @ApiBadRequestResponse({description:"user not found"})
+ @ApiBadRequestResponse({description:"wrong password"})
+ @ApiOkResponse({description:"chek your email"})
+  @Post("login")
+   @HttpCode(200)
+ login( @Body() dto:LoginDto){
+  return this.authService.login(dto)
+ }
 }
