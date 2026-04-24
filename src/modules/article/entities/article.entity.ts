@@ -1,7 +1,9 @@
 
 
 import { BaseEntity } from "src/database/entities/base.entiy";
-import { Column, Entity } from "typeorm";
+import { Auth } from "src/modules/auth/entities/auth.entity";
+import { Tag } from "src/modules/tag/entities/tag.entity";
+import { Column, DeleteDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne } from "typeorm";
 
 
 @Entity({name: "article" })
@@ -16,6 +18,18 @@ export class Article extends BaseEntity{
 @Column()
 backroundImage!:string
 
+@DeleteDateColumn({})
+deletedAt?:Date
 
+//relations
+
+
+@ManyToOne(()=>Auth,(user)=>user.articles,{nullable:false})
+@JoinColumn({name:"user_id"})
+author!:Auth;
+
+@ManyToMany(()=>Tag,(tag)=>tag.articles,{nullable:false,cascade:false})
+@JoinTable({name:"tag_id"})
+tags!:Tag[]
 }
 
