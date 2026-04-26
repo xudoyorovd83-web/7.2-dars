@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, UseInterceptors, UploadedFile, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, UseInterceptors, UploadedFile, UseGuards, Req, Query } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
@@ -12,6 +12,7 @@ import { AuthGuard } from 'src/common/guards/auth-guards';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles-decorstors';
 import { RoleUser } from 'src/shared/enums/roles.enum';
+import { QuerryDto } from './dto/querry.dto';
 
 @ApiBearerAuth("JWT-auth")
 @ApiInternalServerErrorResponse({ description: "Imternal  server error" })
@@ -48,8 +49,8 @@ export class ArticleController {
   })
   @HttpCode(200)
   @Get()
-  findAll() {
-    return this.articleService.findAll();
+  findAll(@Query()QuerryDto:QuerryDto) {
+    return this.articleService.findAll(QuerryDto);
   }
   @ApiNotFoundResponse({ description: "Article not found" })
   @HttpCode(200)

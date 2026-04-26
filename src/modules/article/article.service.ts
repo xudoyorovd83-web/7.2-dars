@@ -5,6 +5,7 @@ import { Article } from './entities/article.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Tag } from '../tag/entities/tag.entity';
+import { QuerryDto } from './dto/querry.dto';
 
 @Injectable()
 export class ArticleService {
@@ -29,14 +30,37 @@ export class ArticleService {
         return await this.articleRepo.save(article)
     }
 
-    async findAll(): Promise<Article[]> {
-        return await this.articleRepo.find()
+    async findAll(QuerryDto: QuerryDto) {
+        const { page = 1, limit = 10, search } = QuerryDto
+
+        const querryBuilder = this.articleRepo.createQueryBuilder("article")
+            .leftJoinAndSelect("article.tags", "tags")
+            .where("article.deletedAt is null")
+
+        if (search) {
+            querryBuilder.andWhere("article.title ILIKE:search or tags.name ILIKE :saerch ",
+                { search: `%${search}%` })
+        }
+        const result = await querryBuilder
+            .orderBy("article.createdAt", "DESC")
+            .skip((page - 1) * 1)
+            .take(limit)
+            .getMany()
+
+        const total = await querryBuilder.getCount()
+
+        return {
+            totalPage: Math.ceil(total / limit),
+            prev: page > 1 ? { page: page - 1, limit } : undefined,
+            next: page * limit > total ? { page: page + 1, limit } : undefined,
+            result
+        }
     }
 
     async findOne(id: number): Promise<Article> {
         const foundedArticle = await this.articleRepo.findOne({
             where: { id },
-            relations: ["author","tags"]
+            relations: ["author", "tags","images"]
         })
 
         if (!foundedArticle) throw new NotFoundException("not found")
@@ -45,29 +69,29 @@ export class ArticleService {
 
 
 
-   async update(
-  id: number,
-  updateArticleDto: UpdateArticleDto,
-): Promise<{ message: string }> {
-  const article = await this.articleRepo.findOne({
-    where: { id },
-    relations: ['tags'], // muhim
-  });
+    async update(
+        id: number,
+        updateArticleDto: UpdateArticleDto,
+    ): Promise<{ message: string }> {
+        const article = await this.articleRepo.findOne({
+            where: { id },
+            relations: ['tags'], // muhim
+        });
 
-  if (!article) throw new NotFoundException("not found");
+        if (!article) throw new NotFoundException("not found");
 
-  // oddiy fieldlar
-  Object.assign(article, updateArticleDto);
+        // oddiy fieldlar
+        Object.assign(article, updateArticleDto);
 
-  // 🔥 tags ni map qilish
-  if (updateArticleDto.tags) {
-    article.tags = updateArticleDto.tags.map((id) => ({ id } as any));
-  }
+        // 🔥 tags ni map qilish
+        if (updateArticleDto.tags) {
+            article.tags = updateArticleDto.tags.map((id) => ({ id } as any));
+        }
 
-  await this.articleRepo.save(article);
+        await this.articleRepo.save(article);
 
-  return { message: "updated" };
-}
+        return { message: "updated" };
+    }
 
     async remove(id: number): Promise<{ message: string }> {
         const foundedArticle = await this.articleRepo.findOne({ where: { id } })
